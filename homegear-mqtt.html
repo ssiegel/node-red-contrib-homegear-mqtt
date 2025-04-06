@@ -5,11 +5,11 @@
 <script type="text/javascript">
 
 	RED.nodes.registerType('homegear-mqtt in',{
-		category: 'input',
+		category: 'homegear',
 		color: '#c0deed',
 		defaults: {
 			broker: {type:'mqtt-broker', required:true},
-			homegearId: {value:'1234-5678-9abc', required:true},
+			homegearId: {value:''},
 			peerId: {value:1, required:true, validate:RED.validators.number()},
 			deviceType: {required:true},
 			publishUpdates: {value:true, required:true},
@@ -66,8 +66,8 @@
 		oneditsave: function() {
 			var name = $('#node-input-name').val();
 			var peer = $('#node-input-peerId').val();
-			var homegear = $('#node-input-homegearId').val() || '1234-5678-9abc';
-			var genName = homegear + '.' + peer + '.' + $('#node-input-deviceTypeList option:selected').text();
+			var homegear = $('#node-input-homegearId').val();
+			var genName = homegear + (homegear ? '.' : '') + peer + '.' + $('#node-input-deviceTypeList option:selected').text();
 
 			$('#node-input-genName').val((name === '') ? genName : '');
 		}
@@ -135,11 +135,11 @@
 	var homegear = null;
 
 	RED.nodes.registerType('homegear-mqtt out', {
-		category: 'output',
+		category: 'homegear',
 		color: '#c0deed',
 		defaults: {
 			broker: {type:'mqtt-broker', required:true},
-			homegearId: {value:'1234-5678-9abc', required:true},
+			homegearId: {value:''},
 			peerId: {value:1, required:true, validate:RED.validators.number()},
 			deviceType: {required:true},
 			paramName: {required:true},
@@ -269,7 +269,6 @@
 								$('<option></option>').val(1).text('true')
 													  .appendTo('#node-input-paramValueList');
 
-								$('#node-input-paramValueList').val(selected).change();
 								$('#node-input-paramValueList').show();
 								$('#node-input-paramValueRow').show();
 								break;
@@ -305,12 +304,12 @@
 
 			var name     = $('#node-input-name').val();
 			var peer     = $('#node-input-peerId').val();
-			var homegear = $('#node-input-homegearId').val() || '1234-5678-9abc';
+			var homegear = $('#node-input-homegearId').val();
 			var device   = $('#node-input-deviceTypeList option:selected').text();
 			var param    = $('#node-input-paramName').val();
 			var value    = $('#node-input-paramValue').val();
 
-			var genName = homegear + '.' + peer + '.' + device + '.' + param + (value ? '.' : '') + value;
+			var genName = homegear + (homegear ? '.' : '') + peer + '.' + device + '.' + param + (value ? '.' : '') + value;
 
 			$('#node-input-genName').val((name === '') ? genName : '');
 

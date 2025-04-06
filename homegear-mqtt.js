@@ -25,9 +25,10 @@ module.exports = function(RED) {
 		this.publishUpdates = n.publishUpdates;
 		this.publishComplete = n.publishComplete;
 
+		this.topicPrefix = 'homegear' + (this.homegearId ? '/' + this.homegearId : '');
 
-		this.eventTopic = 'homegear/' + this.homegearId + '/json/' + this.peerId + '/#';
-		this.rpcTopic   = 'homegear/' + this.homegearId + '/rpcResult';
+		this.eventTopic = this.topicPrefix + '/json/' + this.peerId + '/#';
+		this.rpcTopic   = this.topicPrefix + '/rpcResult';
 		this.rpcId      = Math.floor(1 + Math.random() * 7295);
 
 		var node = this;
@@ -102,7 +103,7 @@ module.exports = function(RED) {
 
 			/* request the current state of this devices parameter set */
 			node.brokerConn.publish({
-				topic: 'homegear/' + node.homegearId + '/rpc',
+				topic: this.topicPrefix + '/rpc',
 				qos: 2,
 				retain: false,
 				payload: {
@@ -136,7 +137,9 @@ module.exports = function(RED) {
 		this.paramValue    = n.paramValue;
 		this.publishResult = n.publishResult;
 
-		this.rpcTopic      = 'homegear/' + this.homegearId + '/rpcResult';
+		this.topicPrefix = 'homegear' + (this.homegearId ? '/' + this.homegearId : '');
+
+		this.rpcTopic      = this.topicPrefix + '/rpcResult';
 		this.rpcId         = Math.floor(1 + Math.random() * 7295);
 
 		var node = this;
@@ -170,7 +173,7 @@ module.exports = function(RED) {
 
 		this.on('input', function(input) {
 			var msg = {
-				topic: 'homegear/' + node.homegearId + '/rpc',
+				topic: this.topicPrefix + '/rpc',
 				qos: 2,
 				retain: false,
 				payload: {
