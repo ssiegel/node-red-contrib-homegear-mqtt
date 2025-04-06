@@ -27,35 +27,35 @@ module.exports = function(RED) {
 
 		this.topicPrefix = 'homegear' + (this.homegearId ? '/' + this.homegearId : '');
 
-		this.eventTopic = this.topicPrefix + '/json/' + this.peerId + '/#';
+		this.eventTopic = this.topicPrefix + '/jsonobj/' + this.peerId + '/#';
 		this.rpcTopic   = this.topicPrefix + '/rpcResult';
 		this.rpcId      = Math.floor(1 + Math.random() * 7295);
 
 		var node = this;
 
 		function processMqttPayload(topic, payload) {
-			var oldState = null;
-			if(node.publishUpdates === true) {
-				/* need something to compare against */
-				oldState = clone(node.deviceState);
+			var newState = {};
+			if(node.publishComplete === true || node.publishUpdates === true) {
+				newState = clone(node.deviceState);
 			}
-			if(homegear.updatePayload(node.deviceType, node.deviceState, topic, payload)) {
+			if(homegear.updatePayload(node.deviceType, newState, topic, payload)) {
+				if(RED.util.compareObjects(node.deviceState, newState) === true) {
+					if(node.publishUpdates === true) {
+						/* we only publish updates and there has been no change */
+						return;
+					}
+				} else {
+					node.deviceState = newState;
+				}
 				if(node.publishComplete === true) {
 					if(homegear.payloadIsComplete(node.deviceState) === false) {
 						/* state is incomplete and we only publish complete states */
 						return;
 					}
 				}
-				if(node.publishUpdates === true) {
-					if(RED.util.compareObjects(oldState, node.deviceState) === true) {
-						/* we only publish updates and there has been no change */
-						return;
-					}
-				}
 				/* good to send */
 				node.send({topic: node.name, payload: node.deviceState});
 			}
-			oldState = null;
 		}
 
 		if(this.brokerConn && this.deviceType){
@@ -63,7 +63,7 @@ module.exports = function(RED) {
 
 			node.log('subscribing to topic "' + node.eventTopic + '"');
 			this.brokerConn.subscribe(node.eventTopic, 2, function(topic, payload, packet) {
-				payload = JSON.parse(payload.toString())[0];
+				payload = JSON.parse(payload.toString());
 				processMqttPayload(topic, payload);
 			}, this.id);
 
