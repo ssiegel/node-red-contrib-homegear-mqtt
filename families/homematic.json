@@ -8275,16 +8275,40 @@
   {
     "read": [
       {
-        "name": "STATE",
+        "name": "SHUTTER_CONTACT_1.STATE",
         "channel": 1
       },
       {
-        "name": "LOWBAT",
+        "name": "SHUTTER_CONTACT_1.LOWBAT",
         "channel": 1
       },
       {
-        "name": "INSTALL_TEST",
+        "name": "SHUTTER_CONTACT_1.INSTALL_TEST",
         "channel": 1
+      },
+      {
+        "name": "SHUTTER_CONTACT_2.STATE",
+        "channel": 2
+      },
+      {
+        "name": "SHUTTER_CONTACT_2.LOWBAT",
+        "channel": 2
+      },
+      {
+        "name": "SHUTTER_CONTACT_2.INSTALL_TEST",
+        "channel": 2
+      },
+      {
+        "name": "SHUTTER_CONTACT_3.STATE",
+        "channel": 3
+      },
+      {
+        "name": "SHUTTER_CONTACT_3.LOWBAT",
+        "channel": 3
+      },
+      {
+        "name": "SHUTTER_CONTACT_3.INSTALL_TEST",
+        "channel": 3
       }
     ],
     "names": [
