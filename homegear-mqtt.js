@@ -26,10 +26,7 @@ module.exports = function(RED) {
 		this.publishComplete = n.publishComplete;
 
 		this.topicPrefix = 'homegear' + (this.homegearId ? '/' + this.homegearId : '');
-
 		this.eventTopic = this.topicPrefix + '/jsonobj/' + this.peerId + '/#';
-		this.rpcTopic   = this.topicPrefix + '/rpcResult';
-		this.rpcId      = Math.floor(1 + Math.random() * 7295);
 
 		var node = this;
 
@@ -67,57 +64,15 @@ module.exports = function(RED) {
 				processMqttPayload(topic, payload);
 			}, this.id);
 
-			/* temporarily subscript to rpc responses */
-			node.log('subscribing to topic "' + node.rpcTopic + '"');
-			this.brokerConn.subscribe(node.rpcTopic, 2, function(topic, payload, packet) {
-				payload = JSON.parse(payload.toString());
-
-				if(payload.id === undefined || payload.id != node.rpcId) {
-					return;
-				}
-
-				if(Array.isArray(payload.result)) {
-					node.log('received initial parameter values');
-					payload.result[0].CHANNELS.forEach(function(channel){
-						for(var name in channel.PARAMSET){
-							if(channel.PARAMSET.hasOwnProperty(name)) {
-								var param = channel.PARAMSET[name];
-								var eventTopic = node.eventTopic.replace('/#', '/' + channel.INDEX + '/' + name);
-
-								processMqttPayload(eventTopic, param.VALUE);
-							}
-						}
-					});
-				} else {
-					node.error('unexpected response to parameter request: ' + JSON.stringify(payload.result));
-				}
-
-				node.log('unsubscribing from topic "' + node.rpcTopic + '"');
-				node.brokerConn.unsubscribe(node.rpcTopic, node.id);
-			}, this.id);
-
 			if(this.brokerConn.connected) {
 				node.status({fill:'blue', shape:'dot', text:"node-red:common.status.connected"});
 			}
 			node.brokerConn.register(this);
-
-			/* request the current state of this devices parameter set */
-			node.brokerConn.publish({
-				topic: this.topicPrefix + '/rpc',
-				qos: 2,
-				retain: false,
-				payload: {
-					method: 'getAllValues',
-					params: [ parseInt(node.peerId) ],
-					id: node.rpcId
-				}
-			});
 		}
 
 		this.on('close', function() {
 			if(node.brokerConn) {
-				node.brokerConn.unsubscribe(node.evenTopic,node.id);
-				node.brokerConn.unsubscribe(node.rpcTopic,node.id);
+				node.brokerConn.unsubscribe(node.eventTopic,node.id);
 				node.brokerConn.deregister(node);
 			}
 		});
@@ -135,35 +90,14 @@ module.exports = function(RED) {
 		this.deviceParams  = homegear.writeableParamsForDevice(this.deviceType);
 		this.paramName     = n.paramName;
 		this.paramValue    = n.paramValue;
-		this.publishResult = n.publishResult;
 
 		this.topicPrefix = 'homegear' + (this.homegearId ? '/' + this.homegearId : '');
-
-		this.rpcTopic      = this.topicPrefix + '/rpcResult';
-		this.rpcId         = Math.floor(1 + Math.random() * 7295);
+		this.setTopic = this.topicPrefix + '/set/' + this.peerId + '/';
 
 		var node = this;
 
 		if(this.brokerConn && this.deviceType){
 			this.status({fill:'red', shape:'ring', text:"node-red:common.status.disconnected"});
-
-			if(this.publishResult === true) {
-				node.log('subscribing to topic "' + node.rpcTopic + '"');
-				this.brokerConn.subscribe(node.rpcTopic, 2, function(topic, payload, packet) {
-					payload = JSON.parse(payload.toString());
-
-					if(payload.id !== node.rpcId) {
-						return;
-					}
-
-					if(payload.result !== undefined &&
-					   payload.result !== null) {
-						node.send({payload: payload.result[0]});
-					} else {
-						node.send({payload: 'success'});
-					}
-				}, this.id);
-			}
 
 			if(this.brokerConn.connected) {
 				node.status({fill:'blue', shape:'dot', text:"node-red:common.status.connected"});
@@ -173,7 +107,6 @@ module.exports = function(RED) {
 
 		this.on('input', function(input) {
 			var msg = {
-				topic: this.topicPrefix + '/rpc',
 				qos: 2,
 				retain: false,
 				payload: {
@@ -188,29 +121,26 @@ module.exports = function(RED) {
 
 			this.deviceParams.forEach(function(param){
 				if(param.name === paramName) {
-					msg.payload.params.push(param.channel);
-					msg.payload.params.push(param.name.split('.').pop());
-
+					msg.topic = node.setTopic + param.channel.toString() + '/' + param.name.split('.').pop();
 					if(param.type === 'string') {
-						msg.payload.params.push(paramValue.toString());
+						msg.payload = paramValue.toString();
 					} else if(param.type === 'action') {
-						msg.payload.params.push(Boolean(paramValue));
+						msg.payload = Boolean(paramValue);
 					} else {
-						msg.payload.params.push(Number(paramValue));
+						msg.payload = Number(paramValue);
 					}
 				}
 			});
 
-			if(msg.payload.params.length != 4){
-				node.error('"' + paramName + '" did not match any supported parameter');
-			} else {
+			if("topic" in msg){
 				node.brokerConn.publish(msg);
+			} else {
+				node.error('"' + paramName + '" did not match any supported parameter');
 			}
 		});
 
 		this.on('close', function() {
 			if(node.brokerConn) {
-				node.brokerConn.unsubscribe(node.rpcTopic,node.id);
 				node.brokerConn.deregister(node);
 			}
 		});

@@ -144,11 +144,9 @@
 			deviceType: {required:true},
 			paramName: {required:true},
 			paramValue: {value:''},
-			publishResult: {value:false},
 
 			name: {value:''},
 			genName: {value:''},
-			outputs: {value:0}
 		},
 		inputs: 1,
 		outputs: 0,
@@ -312,14 +310,6 @@
 			var genName = homegear + (homegear ? '.' : '') + peer + '.' + device + '.' + param + (value ? '.' : '') + value;
 
 			$('#node-input-genName').val((name === '') ? genName : '');
-
-			if($('#node-input-publishResult').prop('checked') === true) {
-				$('#node-input-outputs').val(true);
-				this.outputs = 1;
-			} else {
-				$('#node-input-outputs').val(false);
-				this.outputs = 0;
-			}
 		}
 	});
 </script>
@@ -354,12 +344,6 @@
 	</div>
 	<div class="form-row" id="node-input-paramActionNotice" style="display: none">
 		<i><span data-i18n="homegear-mqtt.label.paramActionNotice" style="display: block; width: auto; text-align: center;"></span></i>
-	</div>
-	<div class="form-row">
-		<label>&nbsp;</label>
-		<input type="checkbox" id="node-input-publishResult" style="display: inline-block; width: auto; vertial-align: top;">
-		<label for="node-input-publishResult" style="width: 70%;"><span data-i18n="homegear-mqtt.label.publishResult"></span></label>
-		<input type="text" id="node-input-outputs" style="display: none;">
 	</div>
 	<div class="form-row">
 		<label for="node-input-name"><i class="icon-tag"></i><span data-i18n="node-red:common.label.name"></span></label>
